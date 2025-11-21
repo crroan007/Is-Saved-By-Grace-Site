@@ -55,44 +55,97 @@ When a user submits an application through the website:
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSheet();
 
-  // Parse the JSON data from the request
-  const data = JSON.parse(e.postData.contents);
+  try {
+    // STEP 1: Parse the incoming JSON data
+    Logger.log('=== GOOGLE SHEETS WEBHOOK DEBUG ===');
+    Logger.log('Received POST request');
+    Logger.log('Raw payload: ' + e.postData.contents);
 
-  // Parse activity priorities from the Activity Priorities field
-  // Format: "#1 Activity Name\n#2 Activity Name\n..."
-  const activitiesText = data['Activity Priorities'] || '';
-  const activityLines = activitiesText.split('\n').filter(line => line.trim());
+    const data = JSON.parse(e.postData.contents);
+    Logger.log('Parsed data keys: ' + Object.keys(data).join(', '));
+    Logger.log('Full data object: ' + JSON.stringify(data, null, 2));
 
-  // Extract activities into an array, removing the "#X " prefix
-  const activities = activityLines.map(line => {
-    return line.replace(/^#\d+\s+/, '').trim();
-  });
+    // STEP 2: Log all individual fields
+    Logger.log('--- Field Values ---');
+    Logger.log('Character Name: ' + data['Character Name']);
+    Logger.log('Battle.net Tag: ' + data['Battle.net Tag']);
+    Logger.log('Class: ' + data['Class']);
+    Logger.log('Primary Spec: ' + data['Primary Spec']);
+    Logger.log('Secondary Spec: ' + data['Secondary Spec']);
+    Logger.log('Discord Username: ' + data['Discord Username']);
+    Logger.log('Faith Statement: ' + data['Faith Statement']);
+    Logger.log('Activity Priorities (raw): ' + JSON.stringify(data['Activity Priorities']));
 
-  // Create a row with the form data - matching your sheet column order
-  const row = [
-    new Date(),                        // A: Timestamp
-    data['Faith Statement'],           // B: Faith Statement
-    data['Battle.net Tag'],            // C: Battle Tag
-    data['Discord Username'],          // D: Discord Username
-    data['Character Name'],            // E: Character Name
-    data['Class'],                     // F: Class
-    data['Primary Spec'],              // G: Primary Spec
-    data['Secondary Spec'],            // H: Secondary Spec
-    activities[0] || '',               // I: Activity 1
-    activities[1] || '',               // J: Activity 2
-    activities[2] || '',               // K: Activity 3
-    activities[3] || '',               // L: Activity 4
-    activities[4] || '',               // M: Activity 5
-    'pending',                         // N: Status (default: pending)
-    false                              // O: Has been Invited to Discord (default: false)
-  ];
+    // STEP 3: Parse activity priorities
+    const activitiesText = data['Activity Priorities'] || '';
+    Logger.log('Activities text: "' + activitiesText + '"');
+    Logger.log('Activities text length: ' + activitiesText.length);
+    Logger.log('Activities text charCodes: ' + activitiesText.split('').map(c => c.charCodeAt(0)).join(','));
 
-  // Add the row to the sheet
-  sheet.appendRow(row);
+    const activityLines = activitiesText.split('\n').filter(line => line.trim());
+    Logger.log('Activity lines after split: ' + JSON.stringify(activityLines));
+    Logger.log('Number of activities: ' + activityLines.length);
 
-  // Return success response
-  return ContentService.createTextOutput(JSON.stringify({ success: true }))
-    .setMimeType(ContentService.MimeType.JSON);
+    // Extract activities into an array, removing the "#X " prefix
+    const activities = activityLines.map((line, index) => {
+      const cleaned = line.replace(/^#\d+\s+/, '').trim();
+      Logger.log(`Activity ${index}: "${line}" -> "${cleaned}"`);
+      return cleaned;
+    });
+
+    Logger.log('Final activities array: ' + JSON.stringify(activities));
+
+    // STEP 4: Create the row
+    Logger.log('--- Creating Row ---');
+    const row = [
+      new Date(),                        // A: Timestamp
+      data['Faith Statement'],           // B: Faith Statement
+      data['Battle.net Tag'],            // C: Battle Tag
+      data['Discord Username'],          // D: Discord Username
+      data['Character Name'],            // E: Character Name
+      data['Class'],                     // F: Class
+      data['Primary Spec'],              // G: Primary Spec
+      data['Secondary Spec'],            // H: Secondary Spec
+      activities[0] || '',               // I: Activity 1
+      activities[1] || '',               // J: Activity 2
+      activities[2] || '',               // K: Activity 3
+      activities[3] || '',               // L: Activity 4
+      activities[4] || '',               // M: Activity 5
+      'pending',                         // N: Status (default: pending)
+      false                              // O: Has been Invited to Discord (default: false)
+    ];
+
+    Logger.log('Row to append: ' + JSON.stringify(row));
+    Logger.log('Row length: ' + row.length);
+
+    // STEP 5: Append to sheet
+    Logger.log('--- Appending Row ---');
+    sheet.appendRow(row);
+    Logger.log('Row appended successfully!');
+
+    // STEP 6: Verify the row was added
+    Logger.log('--- Verification ---');
+    const lastRow = sheet.getLastRow();
+    Logger.log('Sheet now has ' + lastRow + ' rows (including header)');
+
+    // Return success response
+    Logger.log('=== SUCCESS ===');
+    return ContentService.createTextOutput(JSON.stringify({ success: true, rowNumber: lastRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    // STEP 7: Error handling
+    Logger.log('=== ERROR ===');
+    Logger.log('Error: ' + error.toString());
+    Logger.log('Stack: ' + error.stack);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString(),
+      stack: error.stack
+    }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 ```
 
@@ -178,9 +231,24 @@ GOOGLE_SHEET_SCRIPT_URL=https://script.google.com/macros/d/YOUR_SCRIPT_ID/useweb
 
 ### Issue: Email received but Google Sheet not updated
 **Solution**:
-1. Check that `GOOGLE_SHEET_SCRIPT_URL` is set correctly
-2. Open your Apps Script and check the **Executions** tab for errors
-3. Verify the sheet has the correct column headers
+1. Check that `GOOGLE_SHEET_SCRIPT_URL` is set correctly in Vercel environment variables
+2. **View Apps Script Logs**:
+   - Open your Google Sheet
+   - Go to **Extensions** → **Apps Script**
+   - Click **Executions** tab (left sidebar) to see recent runs
+   - Click on a failed execution to see detailed error logs
+   - Look for the detailed debug logs that show:
+     - Whether the POST request was received
+     - Exact field values being parsed
+     - How activities are being split and cleaned
+     - Whether the row was appended successfully
+3. **Check the logs for:**
+   - `Raw payload:` - Does it contain your form data?
+   - `Activity Priorities (raw):` - What does this field look like? Is it newline-separated?
+   - `Activity lines after split:` - How many activities were found?
+   - `Row to append:` - Does this have all the right data?
+   - `Row appended successfully!` - Did this line appear?
+4. Verify the sheet has the correct column headers (A-O as specified)
 
 ### Issue: "Invalid recipient" error
 **Solution**: Make sure the `ADMIN_EMAIL` is a valid email address.
