@@ -146,14 +146,15 @@ const RecruitmentFunnel: React.FC = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to send application');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server Error: ${response.status}`);
         }
       }
 
       setStep('summary');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending application:", error);
-      alert("Failed to send application. Please try again or contact us directly.");
+      alert(`Failed to send application: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
