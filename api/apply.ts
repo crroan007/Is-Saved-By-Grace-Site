@@ -62,22 +62,31 @@ export default async function handler(req: any, res: any) {
         // Send to Google Sheets if configured
         if (googleSheetUrl) {
             try {
+                console.log('Sending to Google Sheets:', googleSheetUrl);
+                console.log('Form data:', JSON.stringify(formData));
+
                 const sheetResponse = await fetch(googleSheetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData),
                 });
 
+                const responseText = await sheetResponse.text();
+                console.log(`Google Sheets response status: ${sheetResponse.status}`);
+                console.log(`Google Sheets response body: ${responseText}`);
+
                 if (!sheetResponse.ok) {
-                    const sheetText = await sheetResponse.text();
-                    console.warn(`Google Sheets responded with status ${sheetResponse.status}: ${sheetText}`);
+                    console.error(`Google Sheets error - Status: ${sheetResponse.status}, Body: ${responseText}`);
                 } else {
-                    console.log('Logged to Google Sheet');
+                    console.log('Successfully logged to Google Sheet');
                 }
             } catch (sheetError: any) {
-                console.error('Failed to log to Google Sheet:', sheetError.message || sheetError);
+                console.error('Failed to call Google Sheets webhook:', sheetError.message || sheetError);
+                console.error('Full error:', sheetError);
                 // Don't fail the request if logging fails, just log the error
             }
+        } else {
+            console.log('Google Sheets URL not configured');
         }
 
         return res.status(200).json({ success: true, id: info.messageId });
