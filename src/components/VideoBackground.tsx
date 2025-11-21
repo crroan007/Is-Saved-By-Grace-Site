@@ -13,8 +13,15 @@ const VideoBackground: React.FC = () => {
                 muted
                 loop
                 playsInline
+                preload="auto"
                 onError={(e) => console.error('Video playback error:', e)}
                 className="w-full h-full object-cover"
+                style={{
+                    backgroundColor: '#0a0a0a',
+                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden'
+                }}
             >
                 <source src="/assets/tww-intro.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
