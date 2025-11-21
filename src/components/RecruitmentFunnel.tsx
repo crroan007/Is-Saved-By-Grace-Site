@@ -106,7 +106,8 @@ const RecruitmentFunnel: React.FC = () => {
       { name: 'Social/Fellowship', rank: formData.fellowshipRank }
     ].filter(a => a.rank > 0).sort((a, b) => a.rank - b.rank);
 
-    const activityList = activities.map(a => `#${a.rank} ${a.name}`).join('\n') || 'No activities selected';
+    // Re-number activities sequentially (1, 2, 3, 4, 5) based on final order
+    const activityList = activities.map((a, index) => `#${index + 1} ${a.name}`).join('\n') || 'No activities selected';
 
     // Construct clean data for email and Google Sheets
     const applicationData = {
