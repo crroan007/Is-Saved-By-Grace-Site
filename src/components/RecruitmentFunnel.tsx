@@ -125,15 +125,29 @@ const RecruitmentFunnel: React.FC = () => {
     };
 
     try {
-      // Send to secure serverless API endpoint
-      const response = await fetch('/api/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applicationData)
-      });
+      if (import.meta.env.DEV) {
+        // In development, send directly to FormSubmit to avoid needing Vercel CLI
+        const response = await fetch('https://formsubmit.co/ajax/crroan001@gmail.com', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(applicationData)
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to send application');
+        if (!response.ok) throw new Error('Failed to send application (Dev)');
+      } else {
+        // In production, use the secure serverless API endpoint
+        const response = await fetch('/api/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(applicationData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send application');
+        }
       }
 
       setStep('summary');
