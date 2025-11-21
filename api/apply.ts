@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 export default async function handler(req: any, res: any) {
     // Only allow POST requests
@@ -6,15 +6,25 @@ export default async function handler(req: any, res: any) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Validate Resend API key is configured
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-        console.error('RESEND_API_KEY environment variable not configured');
+    // Validate Gmail configuration
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+    if (!gmailUser || !gmailAppPassword) {
+        console.error('Gmail credentials not configured');
         return res.status(500).json({ error: 'Email service not configured' });
     }
 
-    const resend = new Resend(resendApiKey);
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: gmailUser,
+            pass: gmailAppPassword,
+        },
+    });
+
     const targetEmail = process.env.ADMIN_EMAIL || 'crroan001@gmail.com';
+    const googleSheetUrl = process.env.GOOGLE_SHEET_SCRIPT_URL;
 
     try {
         // Build email content from form data
@@ -24,9 +34,9 @@ export default async function handler(req: any, res: any) {
             .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br />\n');
 
-        // Send email via Resend
-        const response = await resend.emails.send({
-            from: 'noreply@issavedbygrace.com',
+        // Send email via Nodemailer
+        const info = await transporter.sendMail({
+            from: `"Is Saved By Grace" <${gmailUser}>`,
             to: targetEmail,
             subject: formData._subject || 'New Guild Application',
             html: `
@@ -42,12 +52,24 @@ export default async function handler(req: any, res: any) {
             `,
         });
 
-        if (response.error) {
-            console.error('Resend Error:', response.error);
-            return res.status(400).json({ error: response.error.message || 'Failed to send email' });
+        console.log('Message sent: %s', info.messageId);
+
+        // Send to Google Sheets if configured
+        if (googleSheetUrl) {
+            try {
+                await fetch(googleSheetUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+                console.log('Logged to Google Sheet');
+            } catch (sheetError) {
+                console.error('Failed to log to Google Sheet:', sheetError);
+                // Don't fail the request if logging fails, just log the error
+            }
         }
 
-        return res.status(200).json({ success: true, id: response.data?.id });
+        return res.status(200).json({ success: true, id: info.messageId });
     } catch (error) {
         console.error('Server Error:', error);
         return res.status(500).json({ error: 'Internal Server Error' });
