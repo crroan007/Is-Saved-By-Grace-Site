@@ -108,53 +108,37 @@ const RecruitmentFunnel: React.FC = () => {
       { name: 'Social/Fellowship', rank: formData.fellowshipRank }
     ].filter(a => a.rank > 0).sort((a, b) => a.rank - b.rank);
 
-    const activityList = activities.map(a => `**#${a.rank}** ${a.name}`).join('\n') || 'No activities selected';
+    const activityList = activities.map(a => `#${a.rank} ${a.name}`).join('\n') || 'No activities selected';
 
-    // Construct the message for Discord
-    const discordMessage = {
-      content: "**New Guild Application Received!**",
-      embeds: [{
-        title: `New Recruit: ${formData.characterName}`,
-        description: `**Activity Priorities:**\n${activityList}`,
-        color: 0xFFD100, // Alliance Gold
-        fields: [
-          { name: "Class & Specs", value: `${formData.class} - ${formData.primarySpec}${formData.secondarySpec ? ` / ${formData.secondarySpec}` : ''}`, inline: true },
-          { name: "Battle.net Tag", value: formData.battleTag, inline: true },
-          { name: "Discord Username", value: formData.discordHandle, inline: true },
-          { name: "Server", value: formData.server, inline: true },
-          { name: "Faith Statement", value: formData.faithStatement }
-        ],
-        footer: {
-          text: "Is Saved By Grace Recruitment Bot"
-        },
-        timestamp: new Date().toISOString()
-      }]
+    // Construct clean data for Email (FormSubmit)
+    const applicationData = {
+      _subject: `New Application: ${formData.characterName}`,
+      "Character Name": formData.characterName,
+      "Battle.net Tag": formData.battleTag,
+      "Class": formData.class,
+      "Primary Spec": formData.primarySpec,
+      "Secondary Spec": formData.secondarySpec || "None",
+      "Discord Username": formData.discordHandle,
+      "Server": formData.server,
+      "Activity Priorities": activityList,
+      "Faith Statement": formData.faithStatement,
     };
 
     try {
-      // In development, use direct webhook if available to support local testing without Vercel CLI
-      if (import.meta.env.DEV && import.meta.env.VITE_DISCORD_WEBHOOK_URL) {
-        await fetch(import.meta.env.VITE_DISCORD_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(discordMessage)
-        });
-      } else {
-        // In production, use the secure serverless API endpoint
-        const response = await fetch('/api/apply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(discordMessage)
-        });
+      // Send to secure serverless API endpoint
+      const response = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(applicationData)
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to send application');
-        }
+      if (!response.ok) {
+        throw new Error('Failed to send application');
       }
 
       setStep('summary');
     } catch (error) {
-      console.error("Error sending to Discord:", error);
+      console.error("Error sending application:", error);
       alert("Failed to send application. Please try again or contact us directly.");
     } finally {
       setIsSubmitting(false);
