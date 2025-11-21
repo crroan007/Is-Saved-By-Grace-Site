@@ -25,19 +25,20 @@ When a user submits an application through the website:
 4. Add column headers in the first row:
    ```
    A: Timestamp
-   B: Character Name
-   C: Battle.net Tag
-   D: Class
-   E: Primary Spec
-   F: Secondary Spec
-   G: Discord Username
-   H: Server
-   I: Faith Statement
-   J: Activity 1 (First Priority)
-   K: Activity 2 (Second Priority)
-   L: Activity 3 (Third Priority)
-   M: Activity 4 (Fourth Priority)
-   N: Activity 5 (Fifth Priority)
+   B: Faith Statement
+   C: Battle Tag
+   D: Discord Username
+   E: Character Name
+   F: Class
+   G: Primary Spec
+   H: Secondary Spec
+   I: Activity 1 (First Priority)
+   J: Activity 2 (Second Priority)
+   K: Activity 3 (Third Priority)
+   L: Activity 4 (Fourth Priority)
+   M: Activity 5 (Fifth Priority)
+   N: Status
+   O: Has been Invited to Discord
    ```
 
 5. **Save the spreadsheet** (Ctrl+S)
@@ -67,22 +68,23 @@ function doPost(e) {
     return line.replace(/^#\d+\s+/, '').trim();
   });
 
-  // Create a row with the form data
+  // Create a row with the form data - matching your sheet column order
   const row = [
-    new Date(),
-    data['Character Name'],
-    data['Battle.net Tag'],
-    data['Class'],
-    data['Primary Spec'],
-    data['Secondary Spec'],
-    data['Discord Username'],
-    data['Server'],
-    data['Faith Statement'],
-    activities[0] || '',  // Activity 1
-    activities[1] || '',  // Activity 2
-    activities[2] || '',  // Activity 3
-    activities[3] || '',  // Activity 4
-    activities[4] || ''   // Activity 5
+    new Date(),                        // A: Timestamp
+    data['Faith Statement'],           // B: Faith Statement
+    data['Battle.net Tag'],            // C: Battle Tag
+    data['Discord Username'],          // D: Discord Username
+    data['Character Name'],            // E: Character Name
+    data['Class'],                     // F: Class
+    data['Primary Spec'],              // G: Primary Spec
+    data['Secondary Spec'],            // H: Secondary Spec
+    activities[0] || '',               // I: Activity 1
+    activities[1] || '',               // J: Activity 2
+    activities[2] || '',               // K: Activity 3
+    activities[3] || '',               // L: Activity 4
+    activities[4] || '',               // M: Activity 5
+    'pending',                         // N: Status (default: pending)
+    false                              // O: Has been Invited to Discord (default: false)
   ];
 
   // Add the row to the sheet
