@@ -128,9 +128,13 @@ function doPost(e) {
     Logger.log('Row to append: ' + JSON.stringify(row));
     Logger.log('Row length: ' + row.length);
 
-    // STEP 5: Append to sheet with verification
-    Logger.log('--- Appending Row ---');
-    sheet.appendRow(row);
+    // STEP 5: Insert row at the next position (not using appendRow which looks for empty rows)
+    Logger.log('--- Inserting Row ---');
+    const nextRow = lastRowBefore + 1;
+    Logger.log('Inserting at row: ' + nextRow);
+
+    // Insert the row at the specific position
+    sheet.getRange(nextRow, 1, 1, row.length).setValues([row]);
 
     // Force flush to ensure the change is committed
     SpreadsheetApp.flush();
@@ -139,7 +143,7 @@ function doPost(e) {
     // STEP 6: Verify the row was added
     Logger.log('--- Verification ---');
     const lastRowAfter = sheet.getLastRow();
-    Logger.log('Rows in sheet after append: ' + lastRowAfter);
+    Logger.log('Rows in sheet after insert: ' + lastRowAfter);
     Logger.log('Row difference: ' + (lastRowAfter - lastRowBefore));
 
     if (lastRowAfter > lastRowBefore) {
