@@ -35,43 +35,54 @@ export default async function handler(req: any, res: any) {
             .join('<br />\n');
 
         // Send email via Nodemailer
-        const info = await transporter.sendMail({
-            from: `"Is Saved By Grace" <${gmailUser}>`,
-            to: targetEmail,
-            subject: formData._subject || 'New Guild Application',
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <h2 style="color: #0074e0;">New Guild Application</h2>
-                    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px;">
-                        ${emailContent}
+        let info;
+        try {
+            info = await transporter.sendMail({
+                from: `"Is Saved By Grace" <${gmailUser}>`,
+                to: targetEmail,
+                subject: formData._subject || 'New Guild Application',
+                html: `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <h2 style="color: #0074e0;">New Guild Application</h2>
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px;">
+                            ${emailContent}
+                        </div>
+                        <p style="margin-top: 20px; font-size: 12px; color: #666;">
+                            This is an automated email from the Is Saved By Grace guild website.
+                        </p>
                     </div>
-                    <p style="margin-top: 20px; font-size: 12px; color: #666;">
-                        This is an automated email from the Is Saved By Grace guild website.
-                    </p>
-                </div>
-            `,
-        });
-
-        console.log('Message sent: %s', info.messageId);
+                `,
+            });
+            console.log('Message sent: %s', info.messageId);
+        } catch (emailError: any) {
+            console.error('Email sending failed:', emailError.message || emailError);
+            throw new Error(`Email service error: ${emailError.message || 'Unknown error'}`);
+        }
 
         // Send to Google Sheets if configured
         if (googleSheetUrl) {
             try {
-                await fetch(googleSheetUrl, {
+                const sheetResponse = await fetch(googleSheetUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData),
                 });
-                console.log('Logged to Google Sheet');
-            } catch (sheetError) {
-                console.error('Failed to log to Google Sheet:', sheetError);
+
+                if (!sheetResponse.ok) {
+                    const sheetText = await sheetResponse.text();
+                    console.warn(`Google Sheets responded with status ${sheetResponse.status}: ${sheetText}`);
+                } else {
+                    console.log('Logged to Google Sheet');
+                }
+            } catch (sheetError: any) {
+                console.error('Failed to log to Google Sheet:', sheetError.message || sheetError);
                 // Don't fail the request if logging fails, just log the error
             }
         }
 
         return res.status(200).json({ success: true, id: info.messageId });
-    } catch (error) {
-        console.error('Server Error:', error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+        console.error('Server Error:', error.message || error);
+        return res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
 }
