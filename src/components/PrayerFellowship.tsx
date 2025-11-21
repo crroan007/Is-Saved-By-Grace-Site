@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { motion } from 'framer-motion';
 import { MessageCircle, HandHeart } from 'lucide-react';
 import GameMenuButton from './GameMenuButton';

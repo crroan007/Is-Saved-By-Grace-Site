@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Sword, Shield, Users, ArrowRight, ChevronLeft, Send, Cross } from 'lucide-react';
 import GameMenuButton from './GameMenuButton';

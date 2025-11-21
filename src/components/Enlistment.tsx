@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { motion } from 'framer-motion';
 import { ScrollText, Send } from 'lucide-react';
 import GameMenuButton from './GameMenuButton';
