@@ -53,14 +53,25 @@ When a user submits an application through the website:
 
 ```javascript
 function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSheet();
-
   try {
-    // STEP 1: Parse the incoming JSON data
     Logger.log('=== GOOGLE SHEETS WEBHOOK DEBUG ===');
     Logger.log('Received POST request');
     Logger.log('Raw payload: ' + e.postData.contents);
 
+    // STEP 0: Get the spreadsheet and sheet with more debugging
+    Logger.log('--- Getting Sheet Reference ---');
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    Logger.log('Spreadsheet name: ' + ss.getName());
+    Logger.log('Spreadsheet ID: ' + ss.getId());
+
+    const sheet = ss.getActiveSheet();
+    Logger.log('Active sheet name: ' + sheet.getName());
+    Logger.log('Sheet ID: ' + sheet.getSheetId());
+
+    const lastRowBefore = sheet.getLastRow();
+    Logger.log('Rows in sheet before append: ' + lastRowBefore);
+
+    // STEP 1: Parse the incoming JSON data
     const data = JSON.parse(e.postData.contents);
     Logger.log('Parsed data keys: ' + Object.keys(data).join(', '));
     Logger.log('Full data object: ' + JSON.stringify(data, null, 2));
@@ -80,7 +91,6 @@ function doPost(e) {
     const activitiesText = data['Activity Priorities'] || '';
     Logger.log('Activities text: "' + activitiesText + '"');
     Logger.log('Activities text length: ' + activitiesText.length);
-    Logger.log('Activities text charCodes: ' + activitiesText.split('').map(c => c.charCodeAt(0)).join(','));
 
     const activityLines = activitiesText.split('\n').filter(line => line.trim());
     Logger.log('Activity lines after split: ' + JSON.stringify(activityLines));
@@ -99,13 +109,13 @@ function doPost(e) {
     Logger.log('--- Creating Row ---');
     const row = [
       new Date(),                        // A: Timestamp
-      data['Faith Statement'],           // B: Faith Statement
-      data['Battle.net Tag'],            // C: Battle Tag
-      data['Discord Username'],          // D: Discord Username
-      data['Character Name'],            // E: Character Name
-      data['Class'],                     // F: Class
-      data['Primary Spec'],              // G: Primary Spec
-      data['Secondary Spec'],            // H: Secondary Spec
+      data['Faith Statement'] || '',     // B: Faith Statement
+      data['Battle.net Tag'] || '',      // C: Battle Tag
+      data['Discord Username'] || '',    // D: Discord Username
+      data['Character Name'] || '',      // E: Character Name
+      data['Class'] || '',               // F: Class
+      data['Primary Spec'] || '',        // G: Primary Spec
+      data['Secondary Spec'] || 'None',  // H: Secondary Spec
       activities[0] || '',               // I: Activity 1
       activities[1] || '',               // J: Activity 2
       activities[2] || '',               // K: Activity 3
@@ -118,30 +128,53 @@ function doPost(e) {
     Logger.log('Row to append: ' + JSON.stringify(row));
     Logger.log('Row length: ' + row.length);
 
-    // STEP 5: Append to sheet
+    // STEP 5: Append to sheet with verification
     Logger.log('--- Appending Row ---');
     sheet.appendRow(row);
-    Logger.log('Row appended successfully!');
+
+    // Force flush to ensure the change is committed
+    SpreadsheetApp.flush();
+    Logger.log('SpreadsheetApp.flush() called');
 
     // STEP 6: Verify the row was added
     Logger.log('--- Verification ---');
-    const lastRow = sheet.getLastRow();
-    Logger.log('Sheet now has ' + lastRow + ' rows (including header)');
+    const lastRowAfter = sheet.getLastRow();
+    Logger.log('Rows in sheet after append: ' + lastRowAfter);
+    Logger.log('Row difference: ' + (lastRowAfter - lastRowBefore));
+
+    if (lastRowAfter > lastRowBefore) {
+      Logger.log('SUCCESS: Row was appended!');
+    } else {
+      Logger.log('WARNING: Row count did not increase');
+    }
+
+    // Get the data that was just written
+    const lastRowData = sheet.getRange(lastRowAfter, 1, 1, 15).getValues();
+    Logger.log('Last row data: ' + JSON.stringify(lastRowData));
 
     // Return success response
     Logger.log('=== SUCCESS ===');
-    return ContentService.createTextOutput(JSON.stringify({ success: true, rowNumber: lastRow }))
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      rowNumber: lastRowAfter,
+      rowsBefore: lastRowBefore,
+      rowsAfter: lastRowAfter,
+      sheetName: sheet.getName()
+    }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     // STEP 7: Error handling
     Logger.log('=== ERROR ===');
+    Logger.log('Error type: ' + error.name);
+    Logger.log('Error message: ' + error.message);
     Logger.log('Error: ' + error.toString());
     Logger.log('Stack: ' + error.stack);
 
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: error.toString(),
+      message: error.message,
       stack: error.stack
     }))
       .setMimeType(ContentService.MimeType.JSON);
