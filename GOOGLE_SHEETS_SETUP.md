@@ -24,9 +24,21 @@ When a user submits an application through the website:
 3. Name it: `Guild Applications`
 4. Add column headers in the first row:
    ```
-   Timestamp | Character Name | Battle.net Tag | Class | Primary Spec | Secondary Spec | Discord Username | Server | Activity Priorities | Faith Statement
+   A: Timestamp
+   B: Character Name
+   C: Battle.net Tag
+   D: Class
+   E: Primary Spec
+   F: Secondary Spec
+   G: Discord Username
+   H: Server
+   I: Faith Statement
+   J: Activity 1 (First Priority)
+   K: Activity 2 (Second Priority)
+   L: Activity 3 (Third Priority)
+   M: Activity 4 (Fourth Priority)
+   N: Activity 5 (Fifth Priority)
    ```
-   (Note: You can customize these headers to match your needs)
 
 5. **Save the spreadsheet** (Ctrl+S)
 
@@ -45,6 +57,16 @@ function doPost(e) {
   // Parse the JSON data from the request
   const data = JSON.parse(e.postData.contents);
 
+  // Parse activity priorities from the Activity Priorities field
+  // Format: "#1 Activity Name\n#2 Activity Name\n..."
+  const activitiesText = data['Activity Priorities'] || '';
+  const activityLines = activitiesText.split('\n').filter(line => line.trim());
+
+  // Extract activities into an array, removing the "#X " prefix
+  const activities = activityLines.map(line => {
+    return line.replace(/^#\d+\s+/, '').trim();
+  });
+
   // Create a row with the form data
   const row = [
     new Date(),
@@ -55,8 +77,12 @@ function doPost(e) {
     data['Secondary Spec'],
     data['Discord Username'],
     data['Server'],
-    data['Activity Priorities'],
-    data['Faith Statement']
+    data['Faith Statement'],
+    activities[0] || '',  // Activity 1
+    activities[1] || '',  // Activity 2
+    activities[2] || '',  // Activity 3
+    activities[3] || '',  // Activity 4
+    activities[4] || ''   // Activity 5
   ];
 
   // Add the row to the sheet
