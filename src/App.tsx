@@ -170,7 +170,6 @@ function App() {
         id="bg-music"
         autoPlay
         loop
-        muted
         ref={(audio) => {
           if (audio) {
             audio.volume = 0.05;
