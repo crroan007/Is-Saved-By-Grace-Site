@@ -10,7 +10,6 @@ interface FormData {
   subPath: string;
   characterName: string;
   battleTag: string;
-  server: string;
   class: string;
   primarySpec: string;
   secondarySpec: string;
@@ -61,7 +60,6 @@ const RecruitmentFunnel: React.FC = () => {
     subPath: '',
     characterName: '',
     battleTag: '',
-    server: 'Kel\'Thuzad',
     class: '',
     primarySpec: '',
     secondarySpec: '',
@@ -110,7 +108,7 @@ const RecruitmentFunnel: React.FC = () => {
 
     const activityList = activities.map(a => `#${a.rank} ${a.name}`).join('\n') || 'No activities selected';
 
-    // Construct clean data for email
+    // Construct clean data for email and Google Sheets
     const applicationData = {
       _subject: `New Application: ${formData.characterName}`,
       "Character Name": formData.characterName,
@@ -119,7 +117,6 @@ const RecruitmentFunnel: React.FC = () => {
       "Primary Spec": formData.primarySpec,
       "Secondary Spec": formData.secondarySpec || "None",
       "Discord Username": formData.discordHandle,
-      "Server": formData.server,
       "Activity Priorities": activityList,
       "Faith Statement": formData.faithStatement,
     };
