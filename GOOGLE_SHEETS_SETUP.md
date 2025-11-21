@@ -22,23 +22,29 @@ When a user submits an application through the website:
 1. Go to [Google Sheets](https://sheets.google.com)
 2. Click **+ Create** → **Blank spreadsheet**
 3. Name it: `Guild Applications`
-4. Add column headers in the first row:
+4. Add column headers in the first row. **These can be in ANY order** - the script finds them by name:
    ```
-   A: Timestamp
-   B: Faith Statement
-   C: Battle Tag
-   D: Discord Username
-   E: Character Name
-   F: Class
-   G: Primary Spec
-   H: Secondary Spec
-   I: Activity 1 (First Priority)
-   J: Activity 2 (Second Priority)
-   K: Activity 3 (Third Priority)
-   L: Activity 4 (Fourth Priority)
-   M: Activity 5 (Fifth Priority)
-   N: Status
-   O: Has been Invited to Discord
+   Required Headers (can be in any column, any order):
+   - Timestamp
+   - Faith Statement
+   - Battle Tag
+   - Discord Username
+   - Character Name
+   - Class
+   - Primary Spec
+   - Secondary Spec
+   - Activity 1
+   - Activity 2
+   - Activity 3
+   - Activity 4
+   - Activity 5
+   - Status
+   - Has been Invited to Discord
+   ```
+
+   Example arrangement (you can rearrange freely):
+   ```
+   Timestamp | Faith Statement | Status | Has been Invited to Discord | Battle Tag | Discord Username | Character Name | Class | Primary Spec | Secondary Spec | Activity 1 | Activity 2 | Activity 3 | Activity 4 | Activity 5
    ```
 
 5. **Save the spreadsheet** (Ctrl+S)
@@ -58,128 +64,110 @@ function doPost(e) {
     Logger.log('Received POST request');
     Logger.log('Raw payload: ' + e.postData.contents);
 
-    // STEP 0: Get the spreadsheet and sheet with more debugging
+    // STEP 0: Get the spreadsheet and sheet
     Logger.log('--- Getting Sheet Reference ---');
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    Logger.log('Spreadsheet name: ' + ss.getName());
-    Logger.log('Spreadsheet ID: ' + ss.getId());
-
     const sheet = ss.getActiveSheet();
-    Logger.log('Active sheet name: ' + sheet.getName());
-    Logger.log('Sheet ID: ' + sheet.getSheetId());
-
-    const lastRowBefore = sheet.getLastRow();
-    Logger.log('Rows in sheet before append: ' + lastRowBefore);
+    Logger.log('Sheet name: ' + sheet.getName());
 
     // STEP 1: Parse the incoming JSON data
     const data = JSON.parse(e.postData.contents);
     Logger.log('Parsed data keys: ' + Object.keys(data).join(', '));
-    Logger.log('Full data object: ' + JSON.stringify(data, null, 2));
 
-    // STEP 2: Log all individual fields
-    Logger.log('--- Field Values ---');
-    Logger.log('Character Name: ' + data['Character Name']);
-    Logger.log('Battle.net Tag: ' + data['Battle.net Tag']);
-    Logger.log('Class: ' + data['Class']);
-    Logger.log('Primary Spec: ' + data['Primary Spec']);
-    Logger.log('Secondary Spec: ' + data['Secondary Spec']);
-    Logger.log('Discord Username: ' + data['Discord Username']);
-    Logger.log('Faith Statement: ' + data['Faith Statement']);
-    Logger.log('Activity Priorities (raw): ' + JSON.stringify(data['Activity Priorities']));
+    // STEP 2: Get header row and build a column mapping (case-insensitive)
+    Logger.log('--- Building Column Map ---');
+    const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const columnMap = {};
 
-    // STEP 3: Parse activity priorities
-    const activitiesText = data['Activity Priorities'] || '';
+    for (let i = 0; i < headerRow.length; i++) {
+      const headerName = String(headerRow[i]).trim().toLowerCase();
+      columnMap[headerName] = i + 1; // Column numbers are 1-indexed
+      Logger.log(`Column ${i + 1}: "${headerRow[i]}" (key: "${headerName}")`);
+    }
+    Logger.log('Column map created: ' + JSON.stringify(columnMap));
+
+    // STEP 3: Helper function to get value by column header name
+    const getValue = (fieldName, defaultValue = '') => {
+      const value = data[fieldName] !== undefined ? data[fieldName] : defaultValue;
+      return value;
+    };
+
+    // STEP 4: Parse activity priorities
+    const activitiesText = getValue('Activity Priorities', '');
     Logger.log('Activities text: "' + activitiesText + '"');
-    Logger.log('Activities text length: ' + activitiesText.length);
 
     const activityLines = activitiesText.split('\n').filter(line => line.trim());
-    Logger.log('Activity lines after split: ' + JSON.stringify(activityLines));
-    Logger.log('Number of activities: ' + activityLines.length);
-
-    // Extract activities into an array, removing the "#X " prefix
     const activities = activityLines.map((line, index) => {
       const cleaned = line.replace(/^#\d+\s+/, '').trim();
-      Logger.log(`Activity ${index}: "${line}" -> "${cleaned}"`);
       return cleaned;
     });
-
     Logger.log('Final activities array: ' + JSON.stringify(activities));
 
-    // STEP 4: Create the row
-    Logger.log('--- Creating Row ---');
-    const row = [
-      new Date(),                        // A: Timestamp
-      data['Faith Statement'] || '',     // B: Faith Statement
-      data['Battle.net Tag'] || '',      // C: Battle Tag
-      data['Discord Username'] || '',    // D: Discord Username
-      data['Character Name'] || '',      // E: Character Name
-      data['Class'] || '',               // F: Class
-      data['Primary Spec'] || '',        // G: Primary Spec
-      data['Secondary Spec'] || 'None',  // H: Secondary Spec
-      activities[0] || '',               // I: Activity 1
-      activities[1] || '',               // J: Activity 2
-      activities[2] || '',               // K: Activity 3
-      activities[3] || '',               // L: Activity 4
-      activities[4] || '',               // M: Activity 5
-      'pending',                         // N: Status (default: pending)
-      false                              // O: Has been Invited to Discord (default: false)
-    ];
-
-    Logger.log('Row to append: ' + JSON.stringify(row));
-    Logger.log('Row length: ' + row.length);
-
-    // STEP 5: Insert row at the next position (not using appendRow which looks for empty rows)
-    Logger.log('--- Inserting Row ---');
+    // STEP 5: Build the row dynamically based on column headers
+    Logger.log('--- Building Dynamic Row ---');
+    const lastRowBefore = sheet.getLastRow();
     const nextRow = lastRowBefore + 1;
-    Logger.log('Inserting at row: ' + nextRow);
+    const newRowData = {};
 
-    // Insert the row at the specific position
-    sheet.getRange(nextRow, 1, 1, row.length).setValues([row]);
+    // Map data to columns based on header names
+    newRowData['timestamp'] = new Date();
+    newRowData['faith statement'] = getValue('Faith Statement', '');
+    newRowData['battle tag'] = getValue('Battle.net Tag', '');
+    newRowData['discord username'] = getValue('Discord Username', '');
+    newRowData['character name'] = getValue('Character Name', '');
+    newRowData['class'] = getValue('Class', '');
+    newRowData['primary spec'] = getValue('Primary Spec', '');
+    newRowData['secondary spec'] = getValue('Secondary Spec', 'None');
+    newRowData['activity 1'] = activities[0] || '';
+    newRowData['activity 2'] = activities[1] || '';
+    newRowData['activity 3'] = activities[2] || '';
+    newRowData['activity 4'] = activities[3] || '';
+    newRowData['activity 5'] = activities[4] || '';
+    newRowData['status'] = 'pending';
+    newRowData['has been invited to discord'] = false;
+
+    // Create object mapping column positions to values
+    const rowValues = {};
+    for (const [headerKey, columnNum] of Object.entries(columnMap)) {
+      const matchingKey = Object.keys(newRowData).find(k => k.toLowerCase() === headerKey);
+      if (matchingKey) {
+        rowValues[columnNum] = newRowData[matchingKey];
+        Logger.log(`Mapping column ${columnNum} ("${headerKey}") <- "${matchingKey}": ${newRowData[matchingKey]}`);
+      }
+    }
+
+    // STEP 6: Insert the row using column positions
+    Logger.log('--- Inserting Row at row ' + nextRow + ' ---');
+    const range = sheet.getRange(nextRow, 1, 1, sheet.getLastColumn());
+    const rowArray = [];
+    for (let col = 1; col <= sheet.getLastColumn(); col++) {
+      rowArray.push(rowValues[col] !== undefined ? rowValues[col] : '');
+    }
+    range.setValues([rowArray]);
 
     // Force flush to ensure the change is committed
     SpreadsheetApp.flush();
-    Logger.log('SpreadsheetApp.flush() called');
-
-    // STEP 6: Verify the row was added
-    Logger.log('--- Verification ---');
-    const lastRowAfter = sheet.getLastRow();
-    Logger.log('Rows in sheet after insert: ' + lastRowAfter);
-    Logger.log('Row difference: ' + (lastRowAfter - lastRowBefore));
-
-    if (lastRowAfter > lastRowBefore) {
-      Logger.log('SUCCESS: Row was appended!');
-    } else {
-      Logger.log('WARNING: Row count did not increase');
-    }
-
-    // Get the data that was just written
-    const lastRowData = sheet.getRange(lastRowAfter, 1, 1, 15).getValues();
-    Logger.log('Last row data: ' + JSON.stringify(lastRowData));
+    Logger.log('Data inserted successfully');
 
     // Return success response
     Logger.log('=== SUCCESS ===');
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
-      rowNumber: lastRowAfter,
-      rowsBefore: lastRowBefore,
-      rowsAfter: lastRowAfter,
-      sheetName: sheet.getName()
+      rowNumber: nextRow,
+      columnCount: sheet.getLastColumn()
     }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    // STEP 7: Error handling
+    // Error handling
     Logger.log('=== ERROR ===');
-    Logger.log('Error type: ' + error.name);
-    Logger.log('Error message: ' + error.message);
     Logger.log('Error: ' + error.toString());
     Logger.log('Stack: ' + error.stack);
 
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: error.toString(),
-      message: error.message,
-      stack: error.stack
+      message: error.message
     }))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -277,15 +265,18 @@ GOOGLE_SHEET_SCRIPT_URL=https://script.google.com/macros/d/YOUR_SCRIPT_ID/useweb
    - Look for the detailed debug logs that show:
      - Whether the POST request was received
      - Exact field values being parsed
-     - How activities are being split and cleaned
+     - Column mapping (how headers are matched)
      - Whether the row was appended successfully
 3. **Check the logs for:**
    - `Raw payload:` - Does it contain your form data?
-   - `Activity Priorities (raw):` - What does this field look like? Is it newline-separated?
-   - `Activity lines after split:` - How many activities were found?
-   - `Row to append:` - Does this have all the right data?
-   - `Row appended successfully!` - Did this line appear?
-4. Verify the sheet has the correct column headers (A-O as specified)
+   - `Building Column Map` - This shows what headers were detected
+   - `Mapping column X` - Shows how each header was matched to a column
+   - `Data inserted successfully` - Confirms the row was added
+4. **Verify column headers**:
+   - The script finds columns by header name (case-insensitive)
+   - Make sure your headers match the required names (see Step 1)
+   - Headers can be in ANY order - no need to match specific columns
+   - Common mistakes: extra spaces in headers, different capitalization
 
 ### Issue: "Invalid recipient" error
 **Solution**: Make sure the `ADMIN_EMAIL` is a valid email address.
@@ -306,6 +297,7 @@ GOOGLE_SHEET_SCRIPT_URL=https://script.google.com/macros/d/YOUR_SCRIPT_ID/useweb
 
 ## How It Works
 
+### Request Flow
 ```
 User submits form
         ↓
@@ -316,6 +308,21 @@ POST /api/apply
         ↓
 Returns success response
 ```
+
+### Smart Column Mapping
+The Google Apps Script uses **intelligent column header matching**:
+
+1. **Reads the first row** of your sheet to find all column headers
+2. **Builds a map** of header names → column positions (case-insensitive)
+3. **Matches incoming data** to columns by header name, not position
+4. **Inserts data** into the correct columns regardless of order
+
+This means:
+- ✅ You can reorder columns anytime without breaking the script
+- ✅ You can add new columns - they're ignored if not in the data
+- ✅ Headers are case-insensitive ("Activity 1" = "activity 1" = "ACTIVITY 1")
+- ✅ Extra spaces in headers are trimmed automatically
+- ✅ No need to update the script when you rearrange columns
 
 ---
 
