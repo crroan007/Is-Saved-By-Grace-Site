@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Scroll, LogIn } from 'lucide-react';
 import VideoBackground from './components/VideoBackground';
