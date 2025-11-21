@@ -92,8 +92,7 @@ const OurCovenant: React.FC = () => {
                                     }}
                                     className="mt-12 p-8 bg-[#1a1510] border-2 border-alliance-gold/60 rounded-xl relative overflow-hidden shadow-[0_0_30px_rgba(255,209,0,0.15)]"
                                 >
-                                    {/* Parchment Texture */}
-                                    <div className="absolute inset-0 bg-[url('/assets/texture-noise.png')] opacity-20 pointer-events-none mix-blend-overlay" />
+                                    {/* Parchment Texture removed - using gradients for better performance */}
 
                                     {/* Inner Border */}
                                     <div className="absolute inset-2 border border-alliance-gold/30 rounded-lg pointer-events-none" />

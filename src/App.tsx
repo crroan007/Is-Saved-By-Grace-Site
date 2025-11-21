@@ -61,8 +61,7 @@ function App() {
             {/* Glowing Container - Fantasy Style */}
             <div className="relative bg-void-black/80 backdrop-blur-xl border-4 border-double border-alliance-gold/60 rounded-xl p-8 md:p-12 shadow-[0_0_50px_rgba(255,209,0,0.15)] hover:shadow-[0_0_80px_rgba(255,209,0,0.3)] transition-all duration-500">
 
-              {/* Parchment/Magic Texture Overlay */}
-              <div className="absolute inset-0 bg-[url('/assets/texture-noise.png')] opacity-10 pointer-events-none rounded-xl mix-blend-overlay" />
+              {/* Parchment/Magic Texture Overlay - texture file removed, using gradient instead */}
 
               {/* Inner Glow */}
               <div className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_center,rgba(255,209,0,0.05),transparent_70%)] pointer-events-none" />

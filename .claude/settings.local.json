@@ -8,7 +8,9 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd Warcraft-themed volume controller and switch to Resend for email\n\n- Add VolumeController component with gold/alliance styling, mute button, and percentage display\n- Switch from FormSubmit.co to Resend email service to fix Cloudflare 403 blocking\n- Update /api/apply endpoint to use Resend SDK with proper error handling\n- Fix audio autoplay by using muted attribute initially, then unmuting via volume controller\n- Remove FormSubmit fallback logic from RecruitmentFunnel\n- Add .env.example and RESEND_SETUP.md documentation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push)",
       "Bash(git checkout:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Google Sheets integration for application management\n\n- Create comprehensive GOOGLE_SHEETS_SETUP.md with step-by-step instructions\n- Update .env.example with Gmail and Google Sheets configuration\n- API already configured to send applications to both email and Google Sheets\n- Include Apps Script code template for automatic row insertion\n- Add troubleshooting guide and security best practices\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Google Sheets integration for application management\n\n- Create comprehensive GOOGLE_SHEETS_SETUP.md with step-by-step instructions\n- Update .env.example with Gmail and Google Sheets configuration\n- API already configured to send applications to both email and Google Sheets\n- Include Apps Script code template for automatic row insertion\n- Add troubleshooting guide and security best practices\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

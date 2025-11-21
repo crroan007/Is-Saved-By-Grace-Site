@@ -28,8 +28,7 @@ const GameMenuButton: React.FC<GameMenuButtonProps> = ({ children, onClick, clas
       `}
             onClick={onClick}
         >
-            {/* Texture Overlay (WoW Gritty Feel) */}
-            <div className="absolute inset-0 bg-[url('/assets/texture-noise.png')] opacity-20 mix-blend-overlay pointer-events-none" />
+            {/* Texture Overlay removed - using gradients instead for better performance */}
 
             {/* Scanline Overlay (Cyberpunk 2077 Effect) */}
             <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_50%,rgba(255,209,0,0.03)_50%)] bg-[length:100%_2px] pointer-events-none" />
