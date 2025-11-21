@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-alliance-blue: #0074E0;
+  --color-alliance-gold: #FFD100;
+  --color-cyber-purple: #8A2BE2;
+  --color-void-black: #0a0a0a;
+
+  --font-cinzel: 'Cinzel', serif;
+  --font-rajdhani: 'Rajdhani', sans-serif;
+  --font-almendra: 'Almendra', serif;
+
+  --image-cyber-gradient: linear-gradient(to right, #0074E0, #8A2BE2);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Rajdhani:wght@300;500;700&family=Almendra:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+:root {
+  font-family: 'Rajdhani', sans-serif;
+  background-color: var(--color-void-black);
+  color: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes subtle-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
