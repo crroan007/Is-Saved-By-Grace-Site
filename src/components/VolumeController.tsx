@@ -13,8 +13,8 @@ export default function VolumeController({ audioElementId, initialVolume = 0.05 
   useEffect(() => {
     const audioElement = document.getElementById(audioElementId) as HTMLAudioElement;
     if (audioElement) {
-      audioElement.muted = isMuted;
-      audioElement.volume = volume;
+      // Use volume = 0 instead of muted to avoid suspending audio context
+      audioElement.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted, audioElementId]);
 
