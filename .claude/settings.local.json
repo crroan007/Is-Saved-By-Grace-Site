@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Warcraft-themed volume controller and switch to Resend for email\n\n- Add VolumeController component with gold/alliance styling, mute button, and percentage display\n- Switch from FormSubmit.co to Resend email service to fix Cloudflare 403 blocking\n- Update /api/apply endpoint to use Resend SDK with proper error handling\n- Fix audio autoplay by using muted attribute initially, then unmuting via volume controller\n- Remove FormSubmit fallback logic from RecruitmentFunnel\n- Add .env.example and RESEND_SETUP.md documentation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

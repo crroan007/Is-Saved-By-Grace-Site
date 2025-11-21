@@ -110,7 +110,7 @@ const RecruitmentFunnel: React.FC = () => {
 
     const activityList = activities.map(a => `#${a.rank} ${a.name}`).join('\n') || 'No activities selected';
 
-    // Construct clean data for Email (FormSubmit)
+    // Construct clean data for email
     const applicationData = {
       _subject: `New Application: ${formData.characterName}`,
       "Character Name": formData.characterName,
@@ -125,30 +125,16 @@ const RecruitmentFunnel: React.FC = () => {
     };
 
     try {
-      if (import.meta.env.DEV) {
-        // In development, send directly to FormSubmit to avoid needing Vercel CLI
-        const response = await fetch('https://formsubmit.co/ajax/crroan001@gmail.com', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(applicationData)
-        });
+      // Use the secure serverless API endpoint for all environments
+      const response = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(applicationData)
+      });
 
-        if (!response.ok) throw new Error('Failed to send application (Dev)');
-      } else {
-        // In production, use the secure serverless API endpoint
-        const response = await fetch('/api/apply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(applicationData)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Server Error: ${response.status}`);
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server Error: ${response.status}`);
       }
 
       setStep('summary');

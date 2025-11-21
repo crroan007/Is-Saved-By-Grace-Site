@@ -3,7 +3,7 @@ import { Scroll, LogIn } from 'lucide-react';
 import VideoBackground from './components/VideoBackground';
 import GameMenuButton from './components/GameMenuButton';
 import OurCovenant from './components/OurCovenant';
-
+import VolumeController from './components/VolumeController';
 import RecruitmentFunnel from './components/RecruitmentFunnel';
 
 function App() {
@@ -170,6 +170,7 @@ function App() {
         id="bg-music"
         autoPlay
         loop
+        muted
         ref={(audio) => {
           if (audio) {
             audio.volume = 0.05;
@@ -178,6 +179,9 @@ function App() {
       >
         <source src="/northshire-music.mp4" type="audio/mp4" />
       </audio>
+
+      {/* Volume Controller */}
+      <VolumeController audioElementId="bg-music" initialVolume={0.05} />
 
       {/* Footer */}
       <footer className="relative z-10 py-8 text-center text-gray-500 text-sm bg-void-black/80 backdrop-blur-md border-t border-white/5">
